@@ -59,6 +59,7 @@ jobs:
           git fetch --tags
 
           latest_tag=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
+          current_version=$(node -p "require('./package.json').version")
 
           if [[ "$latest_tag" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
             major="${BASH_REMATCH[1]}"
@@ -77,16 +78,25 @@ jobs:
               fi
             fi
           else
-            major=1
-            minor=0
-            patch=0
+            # If no tags exist, use current version from package.json
+            if [[ "$current_version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+              major="${BASH_REMATCH[1]}"
+              minor="${BASH_REMATCH[2]}"
+              patch="${BASH_REMATCH[3]}"
+            else
+              major=1
+              minor=0
+              patch=0
+            fi
           fi
 
           new_tag="v${major}.${minor}.${patch}"
           echo "New tag: $new_tag"
 
-          # Update package.json version
-          npm version "${major}.${minor}.${patch}" --no-git-tag-version
+          # Only update package.json if version is different
+          if [ "$new_tag" != "v$current_version" ]; then
+            npm version "${major}.${minor}.${patch}" --no-git-tag-version
+          fi
 
           # Generate changelog
           if [ -n "$latest_tag" ]; then
