@@ -1,0 +1,73 @@
+name: "Repository Operations"
+description: "GitHub Action to manage repository operations (create, delete, archive, update) using standardized configurations via GitHub API"
+author: "Actions Forge"
+
+inputs:
+  operation:
+    description: "The operation to perform (create, delete, archive, update)"
+    required: true
+  repository_name:
+    description: "Name of the repository"
+    required: true
+  organization:
+    description: "Organization name (if applicable)"
+    required: false
+  description:
+    description: "Repository description"
+    required: false
+  private:
+    description: "Whether the repository should be private"
+    required: false
+    default: "false"
+  auto_init:
+    description: "Whether to initialize the repository with a README"
+    required: false
+    default: "true"
+  gitignore_template:
+    description: "Gitignore template to use"
+    required: false
+  license_template:
+    description: "License template to use"
+    required: false
+  homepage:
+    description: "Repository homepage URL"
+    required: false
+  has_issues:
+    description: "Enable issues for the repository"
+    required: false
+    default: "true"
+  has_projects:
+    description: "Enable projects for the repository"
+    required: false
+    default: "true"
+  has_wiki:
+    description: "Enable wiki for the repository"
+    required: false
+    default: "true"
+  has_discussions:
+    description: "Enable discussions for the repository"
+    required: false
+    default: "false"
+  default_branch:
+    description: "The default branch for the repository"
+    required: false
+    default: "main"
+
+outputs:
+  repository_url:
+    description: "The URL of the created repository"
+    value: ${{ steps.repo.outputs.repository_url }}
+  status:
+    description: "Status of the operation (success/failure)"
+    value: ${{ steps.repo.outputs.status }}
+  message:
+    description: "Detailed message about the operation result"
+    value: ${{ steps.repo.outputs.message }}
+
+runs:
+  using: "node20"
+  main: "dist/index.js"
+
+branding:
+  icon: "git-branch"
+  color: "blue"
