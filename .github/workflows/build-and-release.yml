@@ -126,12 +126,3 @@ jobs:
             --title "$new_tag" \
             --notes-file changelog.txt \
             dist/index.js
-
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v4
-        env:
-          CODECOV_TOKEN: ${{ secrets.GH_CODECOV_TOKEN }}
-        with:
-          fail_ci_if_error: true
-          flags: unittests
-          verbose: true
