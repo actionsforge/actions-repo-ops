@@ -8,12 +8,6 @@
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/node:1": {
       "version": "20.10.0"
-    },
-    "ghcr.io/devcontainers/features/common-utils:2": {
-      "installZsh": false,
-      "installOhMyZsh": false,
-      "upgradePackages": true,
-      "packages": ["jq", "bc"]
     }
   },
   "customizations": {

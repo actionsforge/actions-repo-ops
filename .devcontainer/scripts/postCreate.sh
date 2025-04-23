@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Ensure bc is installed
+sudo apt-get update && sudo apt-get install -y jq bc
+
 # Print environment information
 echo "🔍 Environment Information:"
 echo "Node.js version: $(node -v)"
@@ -44,7 +47,7 @@ if [ -f "package.json" ]; then
 
   echo "🧪 Running tests with coverage..."
   # Run tests with coverage but skip upload
-  npm run test:coverage -- --coverage --coverageReporters="text-summary json-summary"
+  npm test -- --coverage
 
   # Check coverage thresholds
   echo "📊 Checking test coverage thresholds..."
