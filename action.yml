@@ -1,5 +1,5 @@
 name: "Repository Operations"
-description: "GitHub Action to manage repository operations (create, delete, archive, update) using standardized configurations via GitHub API"
+description: "GitHub Action to manage repo operations (create, delete, archive) using standardized configs via the GitHub API"
 author: "Actions Forge"
 
 inputs:

@@ -3,7 +3,7 @@
 ![Test](https://github.com/actionsforge/actions-repo-ops/actions/workflows/test.yml/badge.svg)
 [![Build and Release](https://github.com/actionsforge/actions-repo-ops/actions/workflows/build-and-release.yml/badge.svg)](https://github.com/actionsforge/actions-repo-ops/actions/workflows/build-and-release.yml)
 
-GitHub Action to manage repository operations (create, delete, archive) using standardized configurations via GitHub API.
+GitHub Action to manage repo operations (create, delete, archive) using standardized configs via the GitHub API
 
 ## Features
 
