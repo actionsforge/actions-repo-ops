@@ -5,6 +5,8 @@ import { getOctokit } from '@actions/github';
 // Mock @actions/github
 jest.mock('@actions/github');
 
+jest.setTimeout(5000); // 5 seconds should be plenty for mocked tests
+
 describe('OctokitGitHubClient', () => {
   let client: OctokitGitHubClient;
   let mockCreateInOrg: jest.Mock;
@@ -219,5 +221,13 @@ describe('OctokitGitHubClient', () => {
     test('creates client with token and org name', () => {
       expect(getOctokit).toHaveBeenCalledWith('fake-token');
     });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
   });
 });
