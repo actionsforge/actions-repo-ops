@@ -30065,9 +30065,9 @@ const github_client_1 = __nccwpck_require__(7890);
 const repo_operations_1 = __nccwpck_require__(3562);
 async function run() {
     try {
-        const token = process.env.GH_ORG_TOKEN;
+        const token = process.env.GH_REPO_TOKEN;
         if (!token) {
-            throw new Error('GH_ORG_TOKEN is required');
+            throw new Error('GH_REPO_TOKEN is required');
         }
         const orgName = process.env.GH_ORG_NAME;
         if (!orgName) {

@@ -25,7 +25,7 @@ describe('GitHub Action', () => {
     jest.clearAllMocks();
 
     // Reset environment variables
-    delete process.env.GH_ORG_TOKEN;
+    delete process.env.GH_REPO_TOKEN;
     delete process.env.GH_ORG_NAME;
 
     // Reset mock implementations
@@ -59,11 +59,11 @@ describe('GitHub Action', () => {
   test('validates required environment variables', async () => {
     await run();
 
-    expect(mockSetFailed).toHaveBeenCalledWith('GH_ORG_TOKEN is required');
+    expect(mockSetFailed).toHaveBeenCalledWith('GH_REPO_TOKEN is required');
     expect(mockSetOutput).toHaveBeenCalledWith('status', 'failure');
-    expect(mockSetOutput).toHaveBeenCalledWith('message', 'GH_ORG_TOKEN is required');
+    expect(mockSetOutput).toHaveBeenCalledWith('message', 'GH_REPO_TOKEN is required');
 
-    process.env.GH_ORG_TOKEN = 'fake-token';
+    process.env.GH_REPO_TOKEN = 'fake-token';
     await run();
 
     expect(mockSetFailed).toHaveBeenCalledWith('GH_ORG_NAME is required');
@@ -72,7 +72,7 @@ describe('GitHub Action', () => {
   });
 
   test('validates required action inputs', async () => {
-    process.env.GH_ORG_TOKEN = 'fake-token';
+    process.env.GH_REPO_TOKEN = 'fake-token';
     process.env.GH_ORG_NAME = 'test-org';
 
     mockGetInput.mockImplementation((name) => {
@@ -87,7 +87,7 @@ describe('GitHub Action', () => {
   });
 
   test('handles successful repository creation', async () => {
-    process.env.GH_ORG_TOKEN = 'fake-token';
+    process.env.GH_REPO_TOKEN = 'fake-token';
     process.env.GH_ORG_NAME = 'test-org';
 
     mockGetInput.mockImplementation((name) => {
@@ -119,7 +119,7 @@ describe('GitHub Action', () => {
   });
 
   test('handles successful repository deletion', async () => {
-    process.env.GH_ORG_TOKEN = 'fake-token';
+    process.env.GH_REPO_TOKEN = 'fake-token';
     process.env.GH_ORG_NAME = 'test-org';
 
     mockGetInput.mockImplementation((name) => {
@@ -140,7 +140,7 @@ describe('GitHub Action', () => {
   });
 
   test('handles successful repository archive', async () => {
-    process.env.GH_ORG_TOKEN = 'fake-token';
+    process.env.GH_REPO_TOKEN = 'fake-token';
     process.env.GH_ORG_NAME = 'test-org';
 
     mockGetInput.mockImplementation((name) => {
@@ -161,7 +161,7 @@ describe('GitHub Action', () => {
   });
 
   test('handles operation failure', async () => {
-    process.env.GH_ORG_TOKEN = 'fake-token';
+    process.env.GH_REPO_TOKEN = 'fake-token';
     process.env.GH_ORG_NAME = 'test-org';
 
     // Mock the create operation to return failure
@@ -189,7 +189,7 @@ describe('GitHub Action', () => {
   });
 
   test('handles non-Error objects in catch block', async () => {
-    process.env.GH_ORG_TOKEN = 'fake-token';
+    process.env.GH_REPO_TOKEN = 'fake-token';
     process.env.GH_ORG_NAME = 'test-org';
 
     mockGetInput.mockImplementation(() => {
