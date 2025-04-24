@@ -5,9 +5,9 @@ import { RepoOperationOptions } from './types';
 
 export async function run(): Promise<void> {
   try {
-    const token = process.env.GH_ORG_TOKEN;
+    const token = process.env.GH_REPO_TOKEN;
     if (!token) {
-      throw new Error('GH_ORG_TOKEN is required');
+      throw new Error('GH_REPO_TOKEN is required');
     }
     const orgName = process.env.GH_ORG_NAME;
     if (!orgName) {
