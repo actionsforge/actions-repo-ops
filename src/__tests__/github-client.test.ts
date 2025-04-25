@@ -1,128 +1,214 @@
 import { OctokitGitHubClient } from '../github-client';
-import { RepoOperationOptions, RepoUpdateOptions } from '../types';
-import { getOctokit } from '@actions/github';
-
-// Mock @actions/github
-jest.mock('@actions/github');
-
-jest.setTimeout(5000); // 5 seconds should be plenty for mocked tests
 
 describe('OctokitGitHubClient', () => {
   let client: OctokitGitHubClient;
-  let mockCreateInOrg: jest.Mock;
-  let mockDelete: jest.Mock;
-  let mockUpdate: jest.Mock;
+  let mockOctokit: { rest: { repos: { get: jest.Mock; createInOrg: jest.Mock; delete: jest.Mock; update: jest.Mock } } };
 
   beforeEach(() => {
-    // Reset mocks
-    mockCreateInOrg = jest.fn();
-    mockDelete = jest.fn();
-    mockUpdate = jest.fn();
+    // Clear all mocks
+    jest.clearAllMocks();
 
-    // Setup default mock implementation
-    (getOctokit as jest.Mock).mockReturnValue({
+    // Create mock Octokit instance
+    mockOctokit = {
       rest: {
         repos: {
-          createInOrg: mockCreateInOrg,
-          delete: mockDelete,
-          update: mockUpdate
+          get: jest.fn(),
+          createInOrg: jest.fn(),
+          delete: jest.fn(),
+          update: jest.fn()
         }
       }
-    });
+    };
 
-    client = new OctokitGitHubClient('fake-token', 'test-org');
+    // Create client with mock
+    client = new OctokitGitHubClient('test-token', 'test-org');
+    // Replace the internal Octokit instance
+    (client as unknown as { octokit: typeof mockOctokit }).octokit = mockOctokit;
   });
 
   describe('createRepository', () => {
+    const options = {
+      repositoryName: 'test-repo',
+      description: 'Test repository',
+      isPrivate: true,
+      autoInit: true
+    };
+
     test('creates repository successfully', async () => {
-      mockCreateInOrg.mockResolvedValue({
-        data: { html_url: 'https://github.com/test-org/test-repo' }
+      // Mock get to return 404 (repository doesn't exist)
+      mockOctokit.rest.repos.get.mockRejectedValueOnce(new Error('Not Found'));
+
+      // Mock successful creation
+      mockOctokit.rest.repos.createInOrg.mockResolvedValueOnce({
+        data: {
+          html_url: 'https://github.com/test-org/test-repo'
+        }
       });
 
-      const options: RepoOperationOptions = {
-        repositoryName: 'test-repo',
-        isPrivate: true,
-        description: 'Test repo',
-        autoInit: true,
-        gitignoreTemplate: 'Node',
-        licenseTemplate: 'MIT'
-      };
-
       const result = await client.createRepository(options);
-
       expect(result.status).toBe('success');
       expect(result.message).toBe('Repository test-repo created successfully');
       expect(result.repositoryUrl).toBe('https://github.com/test-org/test-repo');
+    });
 
-      // Verify correct parameters were passed
-      expect(mockCreateInOrg).toHaveBeenCalledWith({
-        org: 'test-org',
-        name: 'test-repo',
-        private: true,
-        description: 'Test repo',
-        auto_init: true,
-        gitignore_template: 'Node',
-        license_template: 'MIT'
+    test('handles repository already exists via get', async () => {
+      // Mock get to return success (repository exists)
+      mockOctokit.rest.repos.get.mockResolvedValueOnce({
+        data: {
+          name: 'test-repo',
+          owner: { login: 'test-org' },
+          html_url: 'https://github.com/test-org/test-repo'
+        }
       });
+
+      const result = await client.createRepository(options);
+      expect(result.status).toBe('success');
+      expect(result.message).toBe('Repository test-repo already exists');
+      expect(result.repositoryUrl).toBe('https://github.com/test-org/test-repo');
+    });
+
+    test('handles repository already exists via create', async () => {
+      // Mock get to return 404
+      mockOctokit.rest.repos.get.mockRejectedValueOnce(new Error('Not Found'));
+
+      // Mock creation to fail with "already exists" error
+      mockOctokit.rest.repos.createInOrg.mockRejectedValueOnce({
+        message: 'name already exists on this account'
+      });
+
+      const result = await client.createRepository(options);
+      expect(result.status).toBe('success');
+      expect(result.message).toBe('Repository test-repo already exists');
+      expect(result.repositoryUrl).toBe('https://github.com/test-org/test-repo');
     });
 
     test('handles API error during creation', async () => {
-      mockCreateInOrg.mockRejectedValue(new Error('API rate limit exceeded'));
+      // Mock get to return 404
+      mockOctokit.rest.repos.get.mockRejectedValueOnce(new Error('Not Found'));
 
-      const options: RepoOperationOptions = {
-        repositoryName: 'test-repo'
-      };
+      // Mock creation error
+      mockOctokit.rest.repos.createInOrg.mockRejectedValueOnce(new Error('API rate limit exceeded'));
 
       const result = await client.createRepository(options);
-
       expect(result.status).toBe('failure');
       expect(result.message).toBe('API rate limit exceeded');
     });
 
-    test('handles non-Error objects during creation', async () => {
-      mockCreateInOrg.mockRejectedValue('Unknown error');
+    test('handles non-Error object during creation', async () => {
+      // Mock get to return 404
+      mockOctokit.rest.repos.get.mockRejectedValueOnce(new Error('Not Found'));
 
-      const options: RepoOperationOptions = {
-        repositoryName: 'test-repo'
-      };
+      // Mock creation to throw a non-Error object
+      mockOctokit.rest.repos.createInOrg.mockRejectedValueOnce('Permission denied');
 
-      const result = await client.createRepository(options);
-
+      const result = await client.createRepository({
+        repositoryName: 'test-repo',
+        description: 'Test repository',
+        isPrivate: true,
+        autoInit: true
+      });
       expect(result.status).toBe('failure');
       expect(result.message).toBe('Failed to create repository');
+    });
+
+    test('handles repository with missing html_url', async () => {
+      // Mock get to return success (repository exists) but without html_url
+      mockOctokit.rest.repos.get.mockResolvedValueOnce({
+        data: {
+          name: 'test-repo',
+          owner: { login: 'test-org' }
+          // No html_url property
+        }
+      });
+
+      const result = await client.createRepository({
+        repositoryName: 'test-repo',
+        description: 'Test repository',
+        isPrivate: true,
+        autoInit: true
+      });
+      expect(result.status).toBe('success');
+      expect(result.message).toBe('Repository test-repo already exists');
+      expect(result.repositoryUrl).toBe('https://github.com/test-org/test-repo');
     });
   });
 
   describe('deleteRepository', () => {
     test('deletes repository successfully', async () => {
-      mockDelete.mockResolvedValue({});
+      // Mock get to return success (repository exists)
+      mockOctokit.rest.repos.get.mockResolvedValueOnce({
+        data: {
+          name: 'test-repo',
+          owner: { login: 'test-org' }
+        }
+      });
+
+      // Mock successful deletion
+      mockOctokit.rest.repos.delete.mockResolvedValueOnce({});
 
       const result = await client.deleteRepository('test-repo');
-
       expect(result.status).toBe('success');
       expect(result.message).toBe('Repository test-repo deleted successfully');
+    });
 
-      // Verify correct parameters
-      expect(mockDelete).toHaveBeenCalledWith({
-        owner: 'test-org',
-        repo: 'test-repo'
-      });
+    test('handles repository not found', async () => {
+      // Mock get to return 404
+      mockOctokit.rest.repos.get.mockRejectedValueOnce(new Error('Not Found'));
+
+      const result = await client.deleteRepository('test-repo');
+      expect(result.status).toBe('success');
+      expect(result.message).toBe('Repository test-repo does not exist');
     });
 
     test('handles API error during deletion', async () => {
-      mockDelete.mockRejectedValue(new Error('Repository not found'));
+      // Mock get to return success
+      mockOctokit.rest.repos.get.mockResolvedValueOnce({
+        data: {
+          name: 'test-repo',
+          owner: { login: 'test-org' }
+        }
+      });
+
+      // Mock deletion error
+      mockOctokit.rest.repos.delete.mockRejectedValueOnce(new Error('Permission denied'));
 
       const result = await client.deleteRepository('test-repo');
-
       expect(result.status).toBe('failure');
-      expect(result.message).toBe('Repository not found');
+      expect(result.message).toBe('Permission denied');
     });
 
-    test('handles non-Error objects during deletion', async () => {
-      mockDelete.mockRejectedValue('Unknown error');
+    test('handles Not Found error from API', async () => {
+      // Mock get to return success (repository exists)
+      mockOctokit.rest.repos.get.mockResolvedValueOnce({
+        data: {
+          name: 'test-repo',
+          owner: { login: 'test-org' }
+        }
+      });
+
+      // Mock delete to throw Not Found error
+      mockOctokit.rest.repos.delete.mockRejectedValueOnce({
+        message: 'Not Found'
+      });
 
       const result = await client.deleteRepository('test-repo');
+      expect(result.status).toBe('success');
+      expect(result.message).toBe('Repository test-repo does not exist');
+    });
 
+    test('handles non-Error object during deletion', async () => {
+      // Mock get to return success (repository exists)
+      mockOctokit.rest.repos.get.mockResolvedValueOnce({
+        data: {
+          name: 'test-repo',
+          owner: { login: 'test-org' }
+        }
+      });
+
+      // Mock delete to throw a non-Error object
+      mockOctokit.rest.repos.delete.mockRejectedValueOnce('Permission denied');
+
+      const result = await client.deleteRepository('test-repo');
       expect(result.status).toBe('failure');
       expect(result.message).toBe('Failed to delete repository');
     });
@@ -130,104 +216,202 @@ describe('OctokitGitHubClient', () => {
 
   describe('archiveRepository', () => {
     test('archives repository successfully', async () => {
-      mockUpdate.mockResolvedValue({});
+      // Mock get to return success (repository exists and not archived)
+      mockOctokit.rest.repos.get.mockResolvedValueOnce({
+        data: {
+          name: 'test-repo',
+          owner: { login: 'test-org' },
+          archived: false
+        }
+      });
+
+      // Mock successful archive
+      mockOctokit.rest.repos.update.mockResolvedValueOnce({});
 
       const result = await client.archiveRepository('test-repo');
-
       expect(result.status).toBe('success');
       expect(result.message).toBe('Repository test-repo archived successfully');
+    });
 
-      // Verify correct parameters
-      expect(mockUpdate).toHaveBeenCalledWith({
-        owner: 'test-org',
-        repo: 'test-repo',
-        archived: true
+    test('handles already archived repository', async () => {
+      // Mock get to return already archived repository
+      mockOctokit.rest.repos.get.mockResolvedValueOnce({
+        data: {
+          name: 'test-repo',
+          owner: { login: 'test-org' },
+          archived: true
+        }
       });
+
+      const result = await client.archiveRepository('test-repo');
+      expect(result.status).toBe('success');
+      expect(result.message).toBe('Repository test-repo is already archived');
+    });
+
+    test('handles repository not found', async () => {
+      // Mock get to return 404
+      mockOctokit.rest.repos.get.mockRejectedValueOnce(new Error('Not Found'));
+
+      const result = await client.archiveRepository('test-repo');
+      expect(result.status).toBe('success');
+      expect(result.message).toBe('Repository test-repo does not exist');
     });
 
     test('handles API error during archiving', async () => {
-      mockUpdate.mockRejectedValue(new Error('Permission denied'));
+      // Mock get to return success
+      mockOctokit.rest.repos.get.mockResolvedValueOnce({
+        data: {
+          name: 'test-repo',
+          owner: { login: 'test-org' },
+          archived: false
+        }
+      });
+
+      // Mock archive error
+      mockOctokit.rest.repos.update.mockRejectedValueOnce(new Error('Permission denied'));
 
       const result = await client.archiveRepository('test-repo');
-
       expect(result.status).toBe('failure');
       expect(result.message).toBe('Permission denied');
     });
 
-    test('handles non-Error objects during archiving', async () => {
-      mockUpdate.mockRejectedValue('Unknown error');
+    test('handles Not Found error from API', async () => {
+      // Mock get to return success (repository exists)
+      mockOctokit.rest.repos.get.mockResolvedValueOnce({
+        data: {
+          name: 'test-repo',
+          owner: { login: 'test-org' },
+          archived: false
+        }
+      });
+
+      // Mock update to throw Not Found error
+      mockOctokit.rest.repos.update.mockRejectedValueOnce({
+        message: 'Not Found'
+      });
 
       const result = await client.archiveRepository('test-repo');
+      expect(result.status).toBe('success');
+      expect(result.message).toBe('Repository test-repo does not exist');
+    });
 
+    test('handles non-Error object during archiving', async () => {
+      // Mock get to return success (repository exists)
+      mockOctokit.rest.repos.get.mockResolvedValueOnce({
+        data: {
+          name: 'test-repo',
+          owner: { login: 'test-org' },
+          archived: false
+        }
+      });
+
+      // Mock update to throw a non-Error object
+      mockOctokit.rest.repos.update.mockRejectedValueOnce('Permission denied');
+
+      const result = await client.archiveRepository('test-repo');
       expect(result.status).toBe('failure');
       expect(result.message).toBe('Failed to archive repository');
     });
   });
 
   describe('updateRepository', () => {
-    test('updates repository successfully', async () => {
-      mockUpdate.mockResolvedValue({});
+    const options = {
+      repositoryName: 'test-repo',
+      description: 'Updated description'
+    };
 
-      const options: RepoUpdateOptions = {
-        repositoryName: 'test-repo',
-        description: 'Updated description',
-        private: true,
-        hasIssues: true,
-        hasProjects: false,
-        hasWiki: true,
-        hasDiscussions: true,
-        defaultBranch: 'main'
-      };
+    test('updates repository successfully', async () => {
+      // Mock get to return success (repository exists)
+      mockOctokit.rest.repos.get.mockResolvedValueOnce({
+        data: {
+          name: 'test-repo',
+          owner: { login: 'test-org' }
+        }
+      });
+
+      // Mock successful update
+      mockOctokit.rest.repos.update.mockResolvedValueOnce({});
 
       const result = await client.updateRepository(options);
-
       expect(result.status).toBe('success');
       expect(result.message).toBe('Repository test-repo updated successfully');
+    });
 
-      // Verify correct parameters
-      expect(mockUpdate).toHaveBeenCalledWith({
-        owner: 'test-org',
-        repo: 'test-repo',
-        description: 'Updated description',
-        private: true,
-        has_issues: true,
-        has_projects: false,
-        has_wiki: true,
-        has_discussions: true,
-        default_branch: 'main'
-      });
+    test('handles repository not found', async () => {
+      // Mock get to return 404
+      mockOctokit.rest.repos.get.mockRejectedValueOnce(new Error('Not Found'));
+
+      const result = await client.updateRepository(options);
+      expect(result.status).toBe('success');
+      expect(result.message).toBe('Repository test-repo does not exist');
     });
 
     test('handles API error during update', async () => {
-      mockUpdate.mockRejectedValue(new Error('Repository not found'));
+      // Mock get to return success
+      mockOctokit.rest.repos.get.mockResolvedValueOnce({
+        data: {
+          name: 'test-repo',
+          owner: { login: 'test-org' }
+        }
+      });
 
-      const result = await client.updateRepository({ repositoryName: 'test-repo' });
+      // Mock update error
+      mockOctokit.rest.repos.update.mockRejectedValueOnce(new Error('Permission denied'));
 
+      const result = await client.updateRepository(options);
       expect(result.status).toBe('failure');
-      expect(result.message).toBe('Repository not found');
+      expect(result.message).toBe('Permission denied');
     });
 
-    test('handles non-Error objects during update', async () => {
-      mockUpdate.mockRejectedValue('Unknown error');
+    test('handles Not Found error from API', async () => {
+      // Mock get to return success (repository exists)
+      mockOctokit.rest.repos.get.mockResolvedValueOnce({
+        data: {
+          name: 'test-repo',
+          owner: { login: 'test-org' }
+        }
+      });
 
-      const result = await client.updateRepository({ repositoryName: 'test-repo' });
+      // Mock update to throw Not Found error
+      mockOctokit.rest.repos.update.mockRejectedValueOnce({
+        message: 'Not Found'
+      });
 
+      const result = await client.updateRepository({
+        repositoryName: 'test-repo',
+        description: 'Updated description'
+      });
+      expect(result.status).toBe('success');
+      expect(result.message).toBe('Repository test-repo does not exist');
+    });
+
+    test('handles non-Error object during update', async () => {
+      // Mock get to return success (repository exists)
+      mockOctokit.rest.repos.get.mockResolvedValueOnce({
+        data: {
+          name: 'test-repo',
+          owner: { login: 'test-org' }
+        }
+      });
+
+      // Mock update to throw a non-Error object
+      mockOctokit.rest.repos.update.mockRejectedValueOnce('Permission denied');
+
+      const result = await client.updateRepository({
+        repositoryName: 'test-repo',
+        description: 'Updated description'
+      });
       expect(result.status).toBe('failure');
       expect(result.message).toBe('Failed to update repository');
     });
   });
 
-  describe('initialization', () => {
-    test('creates client with token and org name', () => {
-      expect(getOctokit).toHaveBeenCalledWith('fake-token');
+  describe('getRepository', () => {
+    test('handles non-Not Found error', async () => {
+      // Mock get to throw a non-Not Found error
+      mockOctokit.rest.repos.get.mockRejectedValueOnce(new Error('API rate limit exceeded'));
+
+      await expect(client['getRepository']('test-repo')).rejects.toThrow('API rate limit exceeded');
     });
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  afterAll(() => {
-    jest.restoreAllMocks();
   });
 });

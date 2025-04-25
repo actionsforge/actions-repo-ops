@@ -1,50 +1,50 @@
 import { RepoOperations } from '../repo-operations';
 import { OctokitGitHubClient } from '../github-client';
-import { RepoOperationOptions } from '../types';
 
-// Mock with error responses
-jest.mock('@actions/github', () => ({
-  getOctokit: jest.fn(() => ({
-    rest: {
-      repos: {
-        createInOrg: jest.fn().mockRejectedValue(new Error('API Error')),
-        delete: jest.fn().mockRejectedValue(new Error('Not Found')),
-        update: jest.fn().mockRejectedValue(new Error('Permission Denied'))
-      }
-    }
-  }))
-}));
+jest.mock('../github-client');
 
 describe('Error Handling', () => {
-  const token = 'fake-token';
-  const orgName = 'test-org';
-  let client: OctokitGitHubClient;
   let repoOps: RepoOperations;
+  let mockClient: jest.Mocked<OctokitGitHubClient>;
 
   beforeEach(() => {
-    client = new OctokitGitHubClient(token, orgName);
-    repoOps = new RepoOperations(client);
+    mockClient = new OctokitGitHubClient('token', 'test-org') as jest.Mocked<OctokitGitHubClient>;
+    repoOps = new RepoOperations(mockClient);
   });
 
   test('handles API errors gracefully', async () => {
-    const options: RepoOperationOptions = {
-      repositoryName: 'test-repo'
+    const options = {
+      repositoryName: 'test-repo',
+      description: 'Test repository'
     };
 
-    // Test create error
+    // Mock API errors
+    mockClient.createRepository.mockResolvedValueOnce({
+      status: 'failure',
+      message: 'API Error'
+    });
+
+    mockClient.deleteRepository.mockResolvedValueOnce({
+      status: 'failure',
+      message: 'API Error'
+    });
+
+    mockClient.archiveRepository.mockResolvedValueOnce({
+      status: 'failure',
+      message: 'API Error'
+    });
+
     let result = await repoOps.execute('create', options);
     expect(result.status).toBe('failure');
     expect(result.message).toBe('API Error');
 
-    // Test delete error
     result = await repoOps.execute('delete', options);
     expect(result.status).toBe('failure');
-    expect(result.message).toBe('Not Found');
+    expect(result.message).toBe('API Error');
 
-    // Test archive error
     result = await repoOps.execute('archive', options);
     expect(result.status).toBe('failure');
-    expect(result.message).toBe('Permission Denied');
+    expect(result.message).toBe('API Error');
   });
 
   test('validates repository names strictly', () => {
