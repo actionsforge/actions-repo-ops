@@ -4,17 +4,25 @@ import { RepoOperationOptions } from '../types';
 
 // Mock the GitHub API calls
 jest.mock('@actions/github', () => ({
-  getOctokit: jest.fn(() => ({
-    rest: {
-      repos: {
-        createInOrg: jest.fn().mockResolvedValue({
-          data: { html_url: 'https://github.com/test-org/test-repo' }
-        }),
-        delete: jest.fn().mockResolvedValue({}),
-        update: jest.fn().mockResolvedValue({})
+  getOctokit: jest.fn(() => {
+    const mockRepos = {
+      get: jest.fn()
+        .mockRejectedValueOnce(new Error('Not Found')) // For initial create check
+        .mockResolvedValueOnce({ data: { name: 'test-repo', owner: { login: 'test-org' }, archived: false } }) // For archive check
+        .mockResolvedValueOnce({ data: { name: 'test-repo', owner: { login: 'test-org' } } }), // For delete check
+      createInOrg: jest.fn().mockResolvedValue({
+        data: { html_url: 'https://github.com/test-org/test-repo' }
+      }),
+      delete: jest.fn().mockResolvedValue({}),
+      update: jest.fn().mockResolvedValue({})
+    };
+
+    return {
+      rest: {
+        repos: mockRepos
       }
-    }
-  }))
+    };
+  })
 }));
 
 describe('Integration Tests', () => {
