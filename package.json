@@ -1,6 +1,6 @@
 {
   "name": "actions-repo-ops",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "GitHub Action to manage repository operations (create, delete, archive) using standardized configurations via GitHub API",
   "main": "dist/index.js",
   "scripts": {
