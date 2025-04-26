@@ -30255,6 +30255,11 @@ class RepoOperations {
         this.client = client;
     }
     validateRepoName(name) {
+        // Allow special GitHub repository names for both organizations and users
+        const specialRepos = ['.github', '.github-private'];
+        if (specialRepos.includes(name)) {
+            return;
+        }
         // Check for empty string or undefined
         if (!name || name.trim().length === 0) {
             throw new Error('Invalid repository name. Use only letters, numbers, dots, hyphens, and underscores.');
