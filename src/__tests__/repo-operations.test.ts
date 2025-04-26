@@ -59,6 +59,13 @@ describe('RepoOperations', () => {
       });
     });
 
+    test('accepts special repository names', () => {
+      const specialNames = ['.github', '.github-private'];
+      specialNames.forEach(name => {
+        expect(() => repoOps.validateRepoName(name)).not.toThrow();
+      });
+    });
+
     test('rejects invalid repository names', () => {
       const invalidNames = [
         'test repo',    // contains space

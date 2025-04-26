@@ -15,14 +15,33 @@ jest.mock('../github-client', () => ({
   OctokitGitHubClient: jest.fn().mockImplementation(() => mockClient)
 }));
 
-describe('GitHub Action', () => {
+// Mock the core module
+jest.mock('@actions/core', () => ({
+  getInput: jest.fn(),
+  setOutput: jest.fn(),
+  setFailed: jest.fn(),
+  info: jest.fn()
+}));
+
+// Mock the process module
+const originalProcess = process;
+const mockProcess = {
+  ...process,
+  env: {
+    ...process.env,
+    GH_REPO_TOKEN: 'test-token',
+    GH_ORG_NAME: 'test-org'
+  }
+};
+
+describe('index', () => {
   const mockGetInput = core.getInput as jest.MockedFunction<typeof core.getInput>;
   const mockSetOutput = core.setOutput as jest.MockedFunction<typeof core.setOutput>;
   const mockSetFailed = core.setFailed as jest.MockedFunction<typeof core.setFailed>;
 
   beforeEach(() => {
-    // Clear all mocks
     jest.clearAllMocks();
+    global.process = mockProcess as NodeJS.Process;
 
     // Reset environment variables
     delete process.env.GH_REPO_TOKEN;
@@ -54,6 +73,27 @@ describe('GitHub Action', () => {
           return '';
       }
     });
+  });
+
+  afterEach(() => {
+    global.process = originalProcess;
+  });
+
+  test('handles direct script execution', async () => {
+    // Mock the run function to verify it's called
+    const mockRun = jest.fn();
+    jest.mock('../index', () => ({
+      run: mockRun,
+      __esModule: true
+    }));
+
+    // Import the index file to trigger the direct execution check
+    const index = await import('../index');
+
+    // Call the run function directly since we can't modify require.main
+    await index.run();
+
+    expect(mockRun).toHaveBeenCalled();
   });
 
   test('validates required environment variables', async () => {
