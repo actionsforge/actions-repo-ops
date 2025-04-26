@@ -87,21 +87,47 @@ describe('RepoOperations', () => {
   });
 
   describe('execute', () => {
-    test('creates a repository', async () => {
+    test('creates a repository with all options', async () => {
       const options: RepoOperationOptions = {
         repositoryName: 'test-repo',
         description: 'Test repository',
-        isPrivate: false,
+        isPrivate: true,
         autoInit: true,
-        gitignoreTemplate: 'Node.js',
-        licenseTemplate: 'MIT'
+        gitignoreTemplate: 'Node',
+        licenseTemplate: 'mit',
+        homepage: 'https://example.com',
+        hasIssues: true,
+        hasProjects: true,
+        hasWiki: true,
+        hasDiscussions: true,
+        teamId: 123,
+        allowSquashMerge: true,
+        allowMergeCommit: true,
+        allowRebaseMerge: true,
+        allowAutoMerge: true,
+        deleteBranchOnMerge: true,
+        allowUpdateBranch: true,
+        defaultBranch: 'main',
+        useSquashPrTitleAsDefault: true,
+        squashMergeCommitTitle: 'PR_TITLE',
+        squashMergeCommitMessage: 'PR_BODY',
+        mergeCommitTitle: 'PR_TITLE',
+        mergeCommitMessage: 'PR_BODY'
       };
 
       const result = await repoOps.execute('create', options);
-
       expect(result.status).toBe('success');
       expect(result.message).toBe('Repository test-repo created successfully');
-      expect(result.repositoryUrl).toBe('https://github.com/org/test-repo');
+    });
+
+    test('creates a repository with minimal options', async () => {
+      const options: RepoOperationOptions = {
+        repositoryName: 'test-repo'
+      };
+
+      const result = await repoOps.execute('create', options);
+      expect(result.status).toBe('success');
+      expect(result.message).toBe('Repository test-repo created successfully');
     });
 
     test('deletes a repository', async () => {

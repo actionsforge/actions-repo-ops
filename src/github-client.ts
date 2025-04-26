@@ -51,7 +51,25 @@ export class OctokitGitHubClient implements GitHubClient {
           private: options.isPrivate,
           auto_init: options.autoInit,
           gitignore_template: options.gitignoreTemplate,
-          license_template: options.licenseTemplate
+          license_template: options.licenseTemplate,
+          homepage: options.homepage,
+          has_issues: options.hasIssues,
+          has_projects: options.hasProjects,
+          has_wiki: options.hasWiki,
+          has_discussions: options.hasDiscussions,
+          team_id: options.teamId,
+          allow_squash_merge: options.allowSquashMerge,
+          allow_merge_commit: options.allowMergeCommit,
+          allow_rebase_merge: options.allowRebaseMerge,
+          allow_auto_merge: options.allowAutoMerge,
+          delete_branch_on_merge: options.deleteBranchOnMerge,
+          allow_update_branch: options.allowUpdateBranch,
+          default_branch: options.defaultBranch,
+          use_squash_pr_title_as_default: options.useSquashPrTitleAsDefault,
+          squash_merge_commit_title: options.squashMergeCommitTitle,
+          squash_merge_commit_message: options.squashMergeCommitMessage,
+          merge_commit_title: options.mergeCommitTitle,
+          merge_commit_message: options.mergeCommitMessage
         });
 
         return {

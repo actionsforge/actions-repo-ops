@@ -26,6 +26,76 @@ inputs:
   license_template:
     description: "License template to use"
     required: false
+  homepage:
+    description: "URL of a project's homepage"
+    required: false
+  has_issues:
+    description: "Enable issues for the repository"
+    required: false
+    default: "true"
+  has_projects:
+    description: "Enable projects for the repository"
+    required: false
+    default: "true"
+  has_wiki:
+    description: "Enable wiki for the repository"
+    required: false
+    default: "true"
+  has_discussions:
+    description: "Enable discussions for the repository"
+    required: false
+    default: "false"
+  team_id:
+    description: "The id of the team that will be granted access to this repository"
+    required: false
+  allow_squash_merge:
+    description: "Allow squash-merging pull requests"
+    required: false
+    default: "true"
+  allow_merge_commit:
+    description: "Allow merging pull requests with a merge commit"
+    required: false
+    default: "true"
+  allow_rebase_merge:
+    description: "Allow rebase-merging pull requests"
+    required: false
+    default: "true"
+  allow_auto_merge:
+    description: "Allow auto-merge for pull requests"
+    required: false
+    default: "false"
+  delete_branch_on_merge:
+    description: "Automatically delete head branches after pull requests are merged"
+    required: false
+    default: "false"
+  allow_update_branch:
+    description: "Allow updating the branch even if it is not behind the remote"
+    required: false
+    default: "false"
+  default_branch:
+    description: "The name of the default branch"
+    required: false
+    default: "main"
+  use_squash_pr_title_as_default:
+    description: "Use squash PR title as default commit message"
+    required: false
+    default: "false"
+  squash_merge_commit_title:
+    description: "The default value for a squash merge commit title (PR_TITLE or COMMIT_OR_PR_TITLE)"
+    required: false
+    default: "PR_TITLE"
+  squash_merge_commit_message:
+    description: "The default value for a squash merge commit message (PR_BODY, COMMIT_MESSAGES, or BLANK)"
+    required: false
+    default: "PR_BODY"
+  merge_commit_title:
+    description: "The default value for a merge commit title (PR_TITLE or MERGE_MESSAGE)"
+    required: false
+    default: "PR_TITLE"
+  merge_commit_message:
+    description: "The default value for a merge commit message (PR_BODY, PR_TITLE, or BLANK)"
+    required: false
+    default: "PR_BODY"
 
 outputs:
   repository_url:

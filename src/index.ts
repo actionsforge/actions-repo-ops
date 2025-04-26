@@ -16,25 +16,40 @@ export async function run(): Promise<void> {
 
     const operation = core.getInput('operation', { required: true });
     const repositoryName = core.getInput('repository_name', { required: true });
-    const description = core.getInput('description');
-    const isPrivate = core.getInput('private') === 'true';
-    const autoInit = core.getInput('auto_init') === 'true';
-    const gitignoreTemplate = core.getInput('gitignore_template');
-    const licenseTemplate = core.getInput('license_template');
 
     const client = new OctokitGitHubClient(token, orgName);
     const repoOps = new RepoOperations(client);
 
     let result;
+    let options: RepoOperationOptions;
+
     switch (operation.toLowerCase()) {
       case 'create':
-        const options: RepoOperationOptions = {
+        options = {
           repositoryName,
-          description,
-          isPrivate,
-          autoInit,
-          gitignoreTemplate,
-          licenseTemplate
+          description: core.getInput('description'),
+          isPrivate: core.getInput('private') === 'true',
+          autoInit: core.getInput('auto_init') === 'true',
+          gitignoreTemplate: core.getInput('gitignore_template'),
+          licenseTemplate: core.getInput('license_template'),
+          homepage: core.getInput('homepage'),
+          hasIssues: core.getInput('has_issues') === 'true',
+          hasProjects: core.getInput('has_projects') === 'true',
+          hasWiki: core.getInput('has_wiki') === 'true',
+          hasDiscussions: core.getInput('has_discussions') === 'true',
+          teamId: parseInt(core.getInput('team_id') || '0') || undefined,
+          allowSquashMerge: core.getInput('allow_squash_merge') === 'true',
+          allowMergeCommit: core.getInput('allow_merge_commit') === 'true',
+          allowRebaseMerge: core.getInput('allow_rebase_merge') === 'true',
+          allowAutoMerge: core.getInput('allow_auto_merge') === 'true',
+          deleteBranchOnMerge: core.getInput('delete_branch_on_merge') === 'true',
+          allowUpdateBranch: core.getInput('allow_update_branch') === 'true',
+          defaultBranch: core.getInput('default_branch') || undefined,
+          useSquashPrTitleAsDefault: core.getInput('use_squash_pr_title_as_default') === 'true',
+          squashMergeCommitTitle: core.getInput('squash_merge_commit_title') as 'PR_TITLE' | 'COMMIT_OR_PR_TITLE' || undefined,
+          squashMergeCommitMessage: core.getInput('squash_merge_commit_message') as 'PR_BODY' | 'COMMIT_MESSAGES' | 'BLANK' || undefined,
+          mergeCommitTitle: core.getInput('merge_commit_title') as 'PR_TITLE' | 'MERGE_MESSAGE' || undefined,
+          mergeCommitMessage: core.getInput('merge_commit_message') as 'PR_BODY' | 'PR_TITLE' | 'BLANK' || undefined
         };
         result = await repoOps.execute('create', options);
         break;
@@ -58,9 +73,6 @@ export async function run(): Promise<void> {
       core.setOutput('repository_url', result.repositoryUrl);
     }
 
-    // Log result
-    console.log(result.message);
-
     // Handle failures
     if (result.status === 'failure') {
       core.setFailed(result.message);
@@ -75,5 +87,5 @@ export async function run(): Promise<void> {
 
 // Only run if this file is being executed directly
 if (require.main === module) {
-  run();
+  void run();
 }
