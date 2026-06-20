@@ -74,7 +74,7 @@ jobs:
   create-repo:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Create Repository
         uses: actionsforge/actions-repo-ops@v1
@@ -128,7 +128,7 @@ jobs:
   delete-repo:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Delete Repository
         uses: actionsforge/actions-repo-ops@v1
@@ -159,7 +159,7 @@ jobs:
   archive-repo:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Archive Repository
         uses: actionsforge/actions-repo-ops@v1
