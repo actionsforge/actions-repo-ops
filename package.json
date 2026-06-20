@@ -23,8 +23,8 @@
   "author": "Actions Forge",
   "license": "MIT",
   "dependencies": {
-    "@actions/core": "^1.10.0",
-    "@actions/github": "^6.0.0",
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.1",
     "@octokit/rest": "^21.1.1"
   },
   "devDependencies": {
@@ -39,5 +39,10 @@
     "ts-jest": "^29.3.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
+  },
+  "overrides": {
+    "undici": "^6.27.0",
+    "brace-expansion": "^1.1.13",
+    "js-yaml": "^4.2.0"
   }
 }
