@@ -41,7 +41,7 @@
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "@eslint/js": "^9.39.2",
-    "globals": "^16.4.0",
+    "globals": "^17.7.0",
     "typescript-eslint": "^8.65.0"
   },
   "overrides": {
