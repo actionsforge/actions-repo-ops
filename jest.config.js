@@ -1,8 +1,9 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  // @actions/github v9 exports ESM-only; map to a CJS stub for Jest.
+  // @actions/core v3 and @actions/github v9 are ESM-only; map to CJS stubs for Jest.
   moduleNameMapper: {
+    '^@actions/core$': '<rootDir>/src/__mocks__/actions-core.ts',
     '^@actions/github$': '<rootDir>/src/__mocks__/actions-github.ts'
   },
   collectCoverageFrom: [
